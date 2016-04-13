@@ -92,6 +92,9 @@ import org.projectfloodlight.openflow.types.VlanPcp;
 import org.projectfloodlight.openflow.types.VlanVid;
 import org.slf4j.Logger;
 
+import org.projectfloodlight.openflow.protocol.OFFlatHeader;//hs 
+import org.projectfloodlight.openflow.protocol.action.OFActionFlat;//hs 
+
 /**
  * OFAction helper functions. Use with any OpenFlowJ-Loxi Action.
  * String utility functions for converting OFActions to and from
@@ -394,7 +397,8 @@ public class ActionUtils {
 						break;
 					case STR_EXPERIMENTER:
 						//no-op. Not implemented
-						log.error("OFAction EXPERIMENTER not implemented.");
+						//log.error("OFAction EXPERIMENTER not implemented.");
+						a = decode_flat(pair, fmb.getVersion(), log); 
 						break;
 					case STR_FIELD_SET: /* ONLY OF1.1+ should get in here. These should only be header fields valid within a set-field. */
 						String[] actionData = pair.split(MatchUtils.SET_FIELD_DELIM);
@@ -867,6 +871,20 @@ public class ActionUtils {
 	 * @param log
 	 * @return
 	 */
+	private static OFActionFlat decode_flat (String actionToDecode, OFVersion version, Logger log) { 
+		OFActionFlat.Builder ab = OFFactories.getFactory(version).actions().buildFlat(); 
+		OFPort port = OFPort.ANY; 
+		System.out.println("function called: decode_flat"); 
+		try { 
+			port = OFPort.of(Integer.parseInt(actionToDecode)); 
+			ab.setPort(port); 
+			System.out.println("port:"+ab.getPort().toString()); 
+			return ab.build(); 
+		} catch (NumberFormatException e) { 
+			log.error("Could not parse Integer port: '{}'", actionToDecode); 
+			return null; 
+		} 
+	}
 	private static OFActionOutput decode_output(String actionToDecode, OFVersion version, Logger log) {
 		Matcher n = Pattern.compile("((all)|(controller)|(local)|(ingress-port)|(normal)|(flood))").matcher(actionToDecode);
 		OFActionOutput.Builder ab = OFFactories.getFactory(version).actions().buildOutput();
